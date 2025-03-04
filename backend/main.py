@@ -1,19 +1,23 @@
 import os
 import wave
+import re
+import logging
 import pyaudio
 import whisper
 import threading
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
-from transformers import MarianMTModel, MarianTokenizer
+from transformers import MarianMTModel, MarianTokenizer , pipeline
 from gtts import gTTS
-
+from werkzeug.utils import secure_filename
+from phi.model.google import Gemini
+import tempfile
+from groq import Groq
 app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend communication
 
-# Load Whisper model for transcription
 whisper_model = whisper.load_model("base")
-
+GROQ_API_KEY = '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'
 # Ensure audio directory exists
 AUDIO_DIR = "recordings"
 os.makedirs(AUDIO_DIR, exist_ok=True)
@@ -29,8 +33,8 @@ recording = False
 frames = []
 recording_thread = None
 audio_file_path = os.path.join(AUDIO_DIR, "recorded_audio.wav")
-
-
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 def start_recording():
     """Start recording audio from the microphone."""
     global recording, frames
@@ -91,6 +95,7 @@ def translate_text(text, src_lang, tgt_lang):
         model_name = f"Helsinki-NLP/opus-mt-{src_lang}-{tgt_lang}"
         tokenizer = MarianTokenizer.from_pretrained(model_name)
         model = MarianMTModel.from_pretrained(model_name)
+        
 
         tokens = tokenizer(text, return_tensors="pt", padding=True, truncation=True)
         translated = model.generate(**tokens)
@@ -144,6 +149,112 @@ def process():
         })
 
     except Exception as e:
+        return jsonify({"message": f"Error: {str(e)}", "status": "error"}), 500
+@app.route("/followup-text", methods=["POST"])
+def followup_text():
+    """
+    Process follow-up text requests using Groq API.
+    """
+    try:
+        # Import Groq library
+        from groq import Groq
+
+        # Get JSON data from the request
+        data = request.get_json()
+        logger.debug(f"Received data: {data}")
+
+        text = data.get("text")
+        src_lang = data.get("src_lang", "auto")  # Source language of the input text
+        tgt_lang = data.get("tgt_lang", "en")  # Target language for the follow-up response
+
+        # Log input text and languages
+        logger.debug(f"Input text: {text}")
+        logger.debug(f"Source language: {src_lang}, Target language: {tgt_lang}")
+
+        # If the source language is not English, translate the input text to English
+        if src_lang != "en":
+            logger.debug("Translating input text to English...")
+            translated_text = translate_text(text, src_lang, "en")
+            if "Translation Error" in translated_text:
+                logger.error(f"Translation failed: {translated_text}")
+                return jsonify({"message": translated_text, "status": "error"}), 400
+            text = translated_text
+            logger.debug(f"Translated text: {text}")
+
+        # Initialize Groq client
+        logger.debug("Initializing Groq client...")
+        client = Groq(api_key=GROQ_API_KEY)
+
+        # Updated prompt for Groq API
+        prompt = f"""
+You are a professional real estate assistant. Extract the important information related to the kind of flat the client wants and provide it in the form of pointers. Use the following template:
+
+**Flat Requirements:**
+- **Type of Flat**: [e.g., 2BHK, 3BHK, Studio Apartment, etc.]
+- **Budget**: [e.g., 1.5 crore, 2 crore, etc.]
+- **Location Prefernces**: [e.g., near schools, hospitals, metro stations, etc.]
+- **Amenities**: [e.g., gym, swimming pool, parking, etc.]
+- **Timeline**: [e.g., ready-to-move, possession in 6 months, etc.]
+
+**Additional Information:**
+- **Other Preferences**: [e.g., furnished/unfurnished, floor preference, etc.]
+- **Next Steps**: [e.g., share property listings, schedule site visits, etc.]
+
+Client's Input: {text}
+"""
+        logger.debug(f"Prompt sent to LLM: {prompt}")
+
+        # Generate follow-up text using Groq API with a different model (e.g., Mixtral 8x7b)
+        logger.debug("Sending request to Groq API...")
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a professional real estate assistant. Extract the important information related to the kind of flat the client wants and provide it in the form of pointers."
+                },
+                {
+                    "role": "user",
+                    "content": prompt  # Use the updated prompt here
+                }
+            ],
+            model="mixtral-8x7b-32768"  # Change the model here
+        )
+
+        # Extract the generated summary
+        summary = chat_completion.choices[0].message.content.strip()
+        logger.debug(f"Generated summary: {summary}")
+
+        # Remove markdown formatting from the summary
+        def remove_markdown(text):
+            """
+            Remove markdown formatting from text.
+            """
+            # Remove bold formatting (**)
+            text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)
+            # Remove bullet points and dashes
+            text = re.sub(r'-\s*', '', text)
+            # Remove extra spaces and newlines
+            text = re.sub(r'\s+', ' ', text).strip()
+            return text
+
+        plain_summary = remove_markdown(summary)
+        logger.debug(f"Plain text summary: {plain_summary}")
+
+        # If the target language is not English, translate the follow-up response
+        if tgt_lang != "en":
+            logger.debug("Translating summary to target language...")
+            translated_summary = translate_text(plain_summary, "en", tgt_lang)
+            if "Translation Error" in translated_summary:
+                logger.error(f"Translation failed: {translated_summary}")
+                return jsonify({"message": translated_summary, "status": "error"}), 400
+            plain_summary = translated_summary
+            logger.debug(f"Translated summary: {plain_summary}")
+
+        # Return the follow-up response in the desired language as plain text
+        return jsonify({"response": plain_summary, "status": "success"}), 200
+
+    except Exception as e:
+        logger.error(f"Error in followup_text: {e}", exc_info=True)
         return jsonify({"message": f"Error: {str(e)}", "status": "error"}), 500
 
 
