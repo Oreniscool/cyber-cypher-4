@@ -366,5 +366,28 @@ def get_results():
     return jsonify({"sentiment_scores": sentiment_data, "summary": summary})
 
 
+@app.route("/translate", methods=["POST"])
+def translate():
+    """API endpoint to translate text from source language to target language."""
+    try:
+        data = request.get_json()
+        src_lang = data.get("src_lang")
+        tgt_lang = data.get("tgt_lang")
+        text = data.get("text")
+        
+        if not src_lang or not tgt_lang or not text:
+            return jsonify({"message": "Missing required parameters", "status": "error"}), 400
+        
+        translated_text = translate_text(text, src_lang, tgt_lang)
+        
+        if "Error" in translated_text:
+            return jsonify({"message": translated_text, "status": "error"}), 500
+        
+        return jsonify({"translated_text": translated_text, "status": "success"}), 200
+    
+    except Exception as e:
+        return jsonify({"message": f"Error: {str(e)}", "status": "error"}), 500
+
+
 if __name__ == '__main__':
     app.run(debug=True)
