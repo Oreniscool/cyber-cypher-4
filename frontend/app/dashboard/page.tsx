@@ -1,8 +1,15 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useState, useEffect } from 'react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   BarChart,
   Bar,
@@ -14,7 +21,7 @@ import {
   PieChart,
   Pie,
   Cell,
-} from "recharts"
+} from 'recharts';
 import {
   Building,
   MessageSquare,
@@ -26,104 +33,119 @@ import {
   Mic,
   Clock,
   ChevronRight,
-} from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 // Sample data
-const languageData = [
-  { name: "Hindi", value: 40, color: "#3b82f6" },
-  { name: "English", value: 30, color: "#10b981" },
-  { name: "Marathi", value: 15, color: "#f59e0b" },
-  { name: "Telugu", value: 10, color: "#8b5cf6" },
-  { name: "Mixed", value: 5, color: "#ec4899" },
-]
+const propertyData = [
+  { name: 'Andheri', value: 35, color: '#ff6384' },
+  { name: 'Bandra', value: 25, color: '#36a2eb' },
+  { name: 'Colaba', value: 15, color: '#ffcd56' },
+  { name: 'Dadar', value: 20, color: '#4bc0c0' },
+  { name: 'South Delhi', value: 30, color: '#9966ff' },
+  { name: 'Connaught Place', value: 18, color: '#ff9f40' },
+  { name: 'Dwarka', value: 22, color: '#c9cbcf' },
+  { name: 'Saket', value: 28, color: '#ff6384' },
+];
 
 const conversationData = [
-  { month: "Jan", count: 45 },
-  { month: "Feb", count: 52 },
-  { month: "Mar", count: 48 },
-  { month: "Apr", count: 61 },
-  { month: "May", count: 55 },
-  { month: "Jun", count: 67 },
-  { month: "Jul", count: 70 },
-]
+  { month: 'Jan', count: 45 },
+  { month: 'Feb', count: 52 },
+  { month: 'Mar', count: 48 },
+  { month: 'Apr', count: 61 },
+  { month: 'May', count: 55 },
+  { month: 'Jun', count: 67 },
+  { month: 'Jul', count: 70 },
+];
 
 const recentConversations = [
   {
     id: 1,
-    client: "Amit Sharma",
-    avatar: "/placeholder.svg?height=40&width=40",
-    property: "3BHK Apartment in Bandra",
-    time: "10:30 AM",
-    date: "Today",
-    language: "Hindi",
-    status: "Follow-up Required",
-    keyPoints: ["Interested in 3BHK", "Budget: 1.5-2 Cr", "Needs parking space"],
+    client: 'Amit Sharma',
+    avatar: '/placeholder.svg?height=40&width=40',
+    property: '3BHK Apartment in Bandra',
+    time: '10:30 AM',
+    date: 'Today',
+    language: 'Hindi',
+    status: 'Follow-up Required',
+    keyPoints: [
+      'Interested in 3BHK',
+      'Budget: 1.5-2 Cr',
+      'Needs parking space',
+    ],
   },
   {
     id: 2,
-    client: "Priya Patel",
-    avatar: "/placeholder.svg?height=40&width=40",
-    property: "2BHK Villa in Andheri",
-    time: "Yesterday",
-    date: "2:15 PM",
-    language: "English/Hindi",
-    status: "Interested",
-    keyPoints: ["Looking for investment", "Prefers ground floor", "Wants garden area"],
+    client: 'Priya Patel',
+    avatar: '/placeholder.svg?height=40&width=40',
+    property: '2BHK Villa in Andheri',
+    time: 'Yesterday',
+    date: '2:15 PM',
+    language: 'English/Hindi',
+    status: 'Interested',
+    keyPoints: [
+      'Looking for investment',
+      'Prefers ground floor',
+      'Wants garden area',
+    ],
   },
   {
     id: 3,
-    client: "Rajesh Kumar",
-    avatar: "/placeholder.svg?height=40&width=40",
-    property: "Commercial Space in Powai",
-    time: "Monday",
-    date: "11:45 AM",
-    language: "Marathi",
-    status: "Scheduled Visit",
-    keyPoints: ["Needs 2000 sq ft", "For IT company", "Requires 24/7 access"],
+    client: 'Rajesh Kumar',
+    avatar: '/placeholder.svg?height=40&width=40',
+    property: 'Commercial Space in Powai',
+    time: 'Monday',
+    date: '11:45 AM',
+    language: 'Marathi',
+    status: 'Scheduled Visit',
+    keyPoints: ['Needs 2000 sq ft', 'For IT company', 'Requires 24/7 access'],
   },
-]
+];
 
 const upcomingFollowUps = [
   {
     id: 1,
-    client: "Amit Sharma",
-    time: "Today, 2:30 PM",
-    type: "Call",
-    notes: "Discuss financing options",
+    client: 'Amit Sharma',
+    time: 'Today, 2:30 PM',
+    type: 'Call',
+    notes: 'Discuss financing options',
   },
   {
     id: 2,
-    client: "Priya Patel",
-    time: "Tomorrow, 11:00 AM",
-    type: "Site Visit",
-    notes: "Show Andheri properties",
+    client: 'Priya Patel',
+    time: 'Tomorrow, 11:00 AM',
+    type: 'Site Visit',
+    notes: 'Show Andheri properties',
   },
   {
     id: 3,
-    client: "Rajesh Kumar",
-    time: "Wed, 3:00 PM",
-    type: "Meeting",
-    notes: "Finalize commercial space requirements",
+    client: 'Rajesh Kumar',
+    time: 'Wed, 3:00 PM',
+    type: 'Meeting',
+    notes: 'Finalize commercial space requirements',
   },
-]
+];
 
 export default function DashboardPage() {
-  const [progress, setProgress] = useState(0)
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    const timer = setTimeout(() => setProgress(66), 500)
-    return () => clearTimeout(timer)
-  }, [])
+    const timer = setTimeout(() => setProgress(66), 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="flex flex-col gap-6 max-w-[1600px] mx-auto">
       <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-bold tracking-tight">Welcome back, Rahul!</h1>
-        <p className="text-muted-foreground">Here's what's happening with your client conversations today.</p>
+        <h1 className="text-2xl font-bold tracking-tight">
+          Welcome back, Rahul!
+        </h1>
+        <p className="text-muted-foreground">
+          Here's what's happening with your client conversations today.
+        </p>
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
@@ -138,7 +160,9 @@ export default function DashboardPage() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card className="card-hover">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Conversations</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Total Conversations
+                </CardTitle>
                 <MessageSquare className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -147,7 +171,7 @@ export default function DashboardPage() {
                   <span className="text-green-500 inline-flex items-center">
                     <ArrowUpRight className="mr-1 h-4 w-4" />
                     +12.5%
-                  </span>{" "}
+                  </span>{' '}
                   from last month
                 </p>
               </CardContent>
@@ -155,7 +179,9 @@ export default function DashboardPage() {
 
             <Card className="card-hover">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Active Clients</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Active Clients
+                </CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -164,7 +190,7 @@ export default function DashboardPage() {
                   <span className="text-green-500 inline-flex items-center">
                     <ArrowUpRight className="mr-1 h-4 w-4" />
                     +4.3%
-                  </span>{" "}
+                  </span>{' '}
                   from last month
                 </p>
               </CardContent>
@@ -172,7 +198,9 @@ export default function DashboardPage() {
 
             <Card className="card-hover">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Properties Shown</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Properties Shown
+                </CardTitle>
                 <Building className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -181,7 +209,7 @@ export default function DashboardPage() {
                   <span className="text-red-500 inline-flex items-center">
                     <ArrowDownRight className="mr-1 h-4 w-4" />
                     -2.5%
-                  </span>{" "}
+                  </span>{' '}
                   from last month
                 </p>
               </CardContent>
@@ -189,7 +217,9 @@ export default function DashboardPage() {
 
             <Card className="card-hover">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pending Follow-ups</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Pending Follow-ups
+                </CardTitle>
                 <Calendar className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -197,7 +227,9 @@ export default function DashboardPage() {
                 <div className="mt-2">
                   <Progress value={progress} className="progress-bar" />
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">{progress}% completed</p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  {progress}% completed
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -205,8 +237,8 @@ export default function DashboardPage() {
           <div className="grid gap-4 md:grid-cols-7">
             <Card className="col-span-4">
               <CardHeader>
-                <CardTitle>Conversation Analytics</CardTitle>
-                <CardDescription>Number of client conversations over time</CardDescription>
+                <CardTitle>Properties sold</CardTitle>
+                <CardDescription>Buisness is booming</CardDescription>
               </CardHeader>
               <CardContent className="pl-2">
                 <div className="h-[350px] w-full">
@@ -216,7 +248,11 @@ export default function DashboardPage() {
                       <XAxis dataKey="month" />
                       <YAxis />
                       <RechartsTooltip />
-                      <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                      <Bar
+                        dataKey="count"
+                        fill="#3b82f6"
+                        radius={[4, 4, 0, 0]}
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -225,24 +261,28 @@ export default function DashboardPage() {
 
             <Card className="col-span-3">
               <CardHeader>
-                <CardTitle>Language Distribution</CardTitle>
-                <CardDescription>Languages used in client conversations</CardDescription>
+                <CardTitle>Properties Sold</CardTitle>
+                <CardDescription>
+                  Properties sold in various locations in Mumbai and Delhi
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="h-[250px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
-                        data={languageData}
+                        data={propertyData}
                         cx="50%"
                         cy="50%"
                         labelLine={false}
                         outerRadius={80}
                         fill="#8884d8"
                         dataKey="value"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        label={({ name, percent }) =>
+                          `${name} ${(percent * 100).toFixed(0)}%`
+                        }
                       >
-                        {languageData.map((entry, index) => (
+                        {propertyData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
@@ -253,9 +293,12 @@ export default function DashboardPage() {
               </CardContent>
               <CardFooter className="flex justify-between">
                 <div className="flex flex-wrap gap-2">
-                  {languageData.map((lang) => (
-                    <Badge key={lang.name} style={{ backgroundColor: lang.color }}>
-                      {lang.name}
+                  {propertyData.map((location) => (
+                    <Badge
+                      key={location.name}
+                      style={{ backgroundColor: location.color }}
+                    >
+                      {location.name}
                     </Badge>
                   ))}
                 </div>
@@ -268,7 +311,9 @@ export default function DashboardPage() {
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle>Recent Conversations</CardTitle>
-                  <CardDescription>Your latest client interactions</CardDescription>
+                  <CardDescription>
+                    Your latest client interactions
+                  </CardDescription>
                 </div>
                 <Button variant="outline" size="sm" className="ml-auto">
                   View all
@@ -278,19 +323,27 @@ export default function DashboardPage() {
               <CardContent>
                 <div className="space-y-4">
                   {recentConversations.map((conversation) => (
-                    <div key={conversation.id} className="flex items-start space-x-4 rounded-md p-3 conversation-item">
+                    <div
+                      key={conversation.id}
+                      className="flex items-start space-x-4 rounded-md p-3 conversation-item"
+                    >
                       <Avatar>
-                        <AvatarImage src={conversation.avatar} alt={conversation.client} />
+                        <AvatarImage
+                          src={conversation.avatar}
+                          alt={conversation.client}
+                        />
                         <AvatarFallback>
                           {conversation.client
-                            .split(" ")
+                            .split(' ')
                             .map((n) => n[0])
-                            .join("")}
+                            .join('')}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 space-y-1">
                         <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium">{conversation.client}</p>
+                          <p className="text-sm font-medium">
+                            {conversation.client}
+                          </p>
                           <div className="flex items-center">
                             <Badge variant="outline" className="ml-2">
                               <Languages className="mr-1 h-3 w-3" />
@@ -298,7 +351,9 @@ export default function DashboardPage() {
                             </Badge>
                           </div>
                         </div>
-                        <p className="text-sm text-muted-foreground">{conversation.property}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {conversation.property}
+                        </p>
                         <div className="flex items-center pt-2">
                           <Clock className="mr-1 h-3 w-3 text-muted-foreground" />
                           <span className="text-xs text-muted-foreground">
@@ -318,7 +373,9 @@ export default function DashboardPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Upcoming Follow-ups</CardTitle>
-                <CardDescription>Scheduled follow-ups with clients</CardDescription>
+                <CardDescription>
+                  Scheduled follow-ups with clients
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -333,7 +390,9 @@ export default function DashboardPage() {
                           <Calendar className="mr-1 h-4 w-4" />
                           {followUp.time}
                         </div>
-                        <p className="text-sm text-muted-foreground">{followUp.notes}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {followUp.notes}
+                        </p>
                       </div>
                       <Badge>{followUp.type}</Badge>
                     </div>
@@ -354,7 +413,9 @@ export default function DashboardPage() {
           <Card>
             <CardHeader>
               <CardTitle>All Conversations</CardTitle>
-              <CardDescription>Manage and analyze all your client conversations</CardDescription>
+              <CardDescription>
+                Manage and analyze all your client conversations
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -366,17 +427,22 @@ export default function DashboardPage() {
                     <div className="flex items-start justify-between">
                       <div className="flex items-center space-x-4">
                         <Avatar>
-                          <AvatarImage src={conversation.avatar} alt={conversation.client} />
+                          <AvatarImage
+                            src={conversation.avatar}
+                            alt={conversation.client}
+                          />
                           <AvatarFallback>
                             {conversation.client
-                              .split(" ")
+                              .split(' ')
                               .map((n) => n[0])
-                              .join("")}
+                              .join('')}
                           </AvatarFallback>
                         </Avatar>
                         <div>
                           <p className="font-medium">{conversation.client}</p>
-                          <p className="text-sm text-muted-foreground">{conversation.property}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {conversation.property}
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -419,7 +485,9 @@ export default function DashboardPage() {
           <Card>
             <CardHeader>
               <CardTitle>Client Management</CardTitle>
-              <CardDescription>View and manage your client information</CardDescription>
+              <CardDescription>
+                View and manage your client information
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -428,27 +496,36 @@ export default function DashboardPage() {
                     <CardHeader className="pb-2">
                       <div className="flex items-center space-x-4">
                         <Avatar>
-                          <AvatarImage src={client.avatar} alt={client.client} />
+                          <AvatarImage
+                            src={client.avatar}
+                            alt={client.client}
+                          />
                           <AvatarFallback>
                             {client.client
-                              .split(" ")
+                              .split(' ')
                               .map((n) => n[0])
-                              .join("")}
+                              .join('')}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <CardTitle className="text-base">{client.client}</CardTitle>
-                          <CardDescription className="text-xs">Preferred: {client.language}</CardDescription>
+                          <CardTitle className="text-base">
+                            {client.client}
+                          </CardTitle>
+                          <CardDescription className="text-xs">
+                            Preferred: {client.language}
+                          </CardDescription>
                         </div>
                       </div>
                     </CardHeader>
                     <CardContent className="pb-2">
                       <div className="space-y-2">
                         <div className="text-sm">
-                          <span className="font-medium">Interested in:</span> {client.property}
+                          <span className="font-medium">Interested in:</span>{' '}
+                          {client.property}
                         </div>
                         <div className="text-sm">
-                          <span className="font-medium">Status:</span> {client.status}
+                          <span className="font-medium">Status:</span>{' '}
+                          {client.status}
                         </div>
                         <div className="text-sm">
                           <span className="font-medium">Requirements:</span>
@@ -476,7 +553,9 @@ export default function DashboardPage() {
           <Card>
             <CardHeader>
               <CardTitle>Follow-up Management</CardTitle>
-              <CardDescription>Track and manage your client follow-ups</CardDescription>
+              <CardDescription>
+                Track and manage your client follow-ups
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
@@ -484,7 +563,7 @@ export default function DashboardPage() {
                   <h3 className="mb-4 text-lg font-medium">Today</h3>
                   <div className="space-y-3">
                     {upcomingFollowUps
-                      .filter((f) => f.time.includes("Today"))
+                      .filter((f) => f.time.includes('Today'))
                       .map((followUp) => (
                         <div
                           key={followUp.id}
@@ -492,9 +571,9 @@ export default function DashboardPage() {
                         >
                           <div className="flex items-center space-x-4">
                             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                              {followUp.type === "Call" ? (
+                              {followUp.type === 'Call' ? (
                                 <Mic className="h-5 w-5 text-primary" />
-                              ) : followUp.type === "Site Visit" ? (
+                              ) : followUp.type === 'Site Visit' ? (
                                 <Building className="h-5 w-5 text-primary" />
                               ) : (
                                 <Calendar className="h-5 w-5 text-primary" />
@@ -502,11 +581,13 @@ export default function DashboardPage() {
                             </div>
                             <div>
                               <p className="font-medium">{followUp.client}</p>
-                              <p className="text-sm text-muted-foreground">{followUp.notes}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {followUp.notes}
+                              </p>
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <Badge>{followUp.time.split(",")[1]}</Badge>
+                            <Badge>{followUp.time.split(',')[1]}</Badge>
                             <Button variant="outline" size="sm">
                               Complete
                             </Button>
@@ -523,7 +604,7 @@ export default function DashboardPage() {
                   <h3 className="mb-4 text-lg font-medium">Upcoming</h3>
                   <div className="space-y-3">
                     {upcomingFollowUps
-                      .filter((f) => !f.time.includes("Today"))
+                      .filter((f) => !f.time.includes('Today'))
                       .map((followUp) => (
                         <div
                           key={followUp.id}
@@ -531,9 +612,9 @@ export default function DashboardPage() {
                         >
                           <div className="flex items-center space-x-4">
                             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                              {followUp.type === "Call" ? (
+                              {followUp.type === 'Call' ? (
                                 <Mic className="h-5 w-5 text-primary" />
-                              ) : followUp.type === "Site Visit" ? (
+                              ) : followUp.type === 'Site Visit' ? (
                                 <Building className="h-5 w-5 text-primary" />
                               ) : (
                                 <Calendar className="h-5 w-5 text-primary" />
@@ -541,7 +622,9 @@ export default function DashboardPage() {
                             </div>
                             <div>
                               <p className="font-medium">{followUp.client}</p>
-                              <p className="text-sm text-muted-foreground">{followUp.notes}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {followUp.notes}
+                              </p>
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
@@ -566,6 +649,5 @@ export default function DashboardPage() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
-

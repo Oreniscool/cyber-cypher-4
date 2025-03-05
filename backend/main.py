@@ -7,10 +7,9 @@ import whisper
 import threading
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
-from transformers import MarianMTModel, MarianTokenizer , pipeline
+from transformers import MarianMTModel, MarianTokenizer 
 from gtts import gTTS
 from werkzeug.utils import secure_filename
-from phi.model.google import Gemini
 import tempfile
 from groq import Groq
 app = Flask(__name__)
