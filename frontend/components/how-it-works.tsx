@@ -1,36 +1,36 @@
-"use client"
+'use client';
 
-import { useLanguage } from "@/context/language-context"
-import { translations } from "@/lib/translations"
-import { motion } from "framer-motion"
-import { Check } from "lucide-react"
+import { useLanguage } from '@/context/language-context';
+import { translations } from '@/lib/translations';
+import { motion } from 'framer-motion';
+import { Check } from 'lucide-react';
 
 export default function HowItWorks() {
-  const { language } = useLanguage()
-  const t = translations[language]
+  const { language } = useLanguage();
+  const t = translations[language];
 
   const steps = [
     {
-      number: "01",
+      number: '01',
       title: t.howItWorks.steps[0].title,
       description: t.howItWorks.steps[0].description,
     },
     {
-      number: "02",
+      number: '02',
       title: t.howItWorks.steps[1].title,
       description: t.howItWorks.steps[1].description,
     },
     {
-      number: "03",
+      number: '03',
       title: t.howItWorks.steps[2].title,
       description: t.howItWorks.steps[2].description,
     },
     {
-      number: "04",
+      number: '04',
       title: t.howItWorks.steps[3].title,
       description: t.howItWorks.steps[3].description,
     },
-  ]
+  ];
 
   return (
     <section id="how-it-works" className="py-20">
@@ -43,8 +43,12 @@ export default function HowItWorks() {
             transition={{ duration: 0.8 }}
             className="space-y-6"
           >
-            <h2 className="text-3xl md:text-4xl font-bold">{t.howItWorks.title}</h2>
-            <p className="text-xl text-muted-foreground">{t.howItWorks.subtitle}</p>
+            <h2 className="text-3xl md:text-4xl font-bold">
+              {t.howItWorks.title}
+            </h2>
+            <p className="text-xl text-muted-foreground">
+              {t.howItWorks.subtitle}
+            </p>
 
             <div className="space-y-8 mt-8">
               {steps.map((step, index) => (
@@ -77,14 +81,16 @@ export default function HowItWorks() {
           >
             <div className="aspect-video relative">
               <img
-                src="/placeholder.svg?height=720&width=1280"
+                src="/showcase.png"
                 alt="VoiceConnect in action"
                 className="w-full h-full object-cover"
               />
 
               {/* Overlay with features */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-6">
-                <h3 className="text-white text-xl font-bold mb-4">{t.howItWorks.demoTitle}</h3>
+                <h3 className="text-white text-xl font-bold mb-4">
+                  {t.howItWorks.demoTitle}
+                </h3>
                 <div className="space-y-2">
                   {t.howItWorks.demoFeatures.map((feature, index) => (
                     <div key={index} className="flex items-center gap-2">
@@ -99,6 +105,5 @@ export default function HowItWorks() {
         </div>
       </div>
     </section>
-  )
+  );
 }
-

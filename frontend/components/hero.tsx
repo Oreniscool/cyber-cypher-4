@@ -1,13 +1,13 @@
-"use client"
+'use client';
 
-import { Button } from "@/components/ui/button"
-import { useLanguage } from "@/context/language-context"
-import { translations } from "@/lib/translations"
-import { motion } from "framer-motion"
+import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/context/language-context';
+import { translations } from '@/lib/translations';
+import { motion } from 'framer-motion';
 
 export default function Hero() {
-  const { language } = useLanguage()
-  const t = translations[language]
+  const { language } = useLanguage();
+  const t = translations[language];
 
   return (
     <section className="relative pt-24 pb-16 md:pt-32 md:pb-24 overflow-hidden">
@@ -19,13 +19,22 @@ export default function Hero() {
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 0.1, scale: 1 }}
-          transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, repeatType: "reverse" }}
+          transition={{
+            duration: 2,
+            repeat: Number.POSITIVE_INFINITY,
+            repeatType: 'reverse',
+          }}
           className="absolute -top-20 -right-20 w-96 h-96 rounded-full bg-primary/20"
         />
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 0.1, scale: 1 }}
-          transition={{ duration: 3, repeat: Number.POSITIVE_INFINITY, repeatType: "reverse", delay: 0.5 }}
+          transition={{
+            duration: 3,
+            repeat: Number.POSITIVE_INFINITY,
+            repeatType: 'reverse',
+            delay: 0.5,
+          }}
           className="absolute -bottom-32 -left-32 w-[500px] h-[500px] rounded-full bg-primary/10"
         />
       </div>
@@ -42,20 +51,32 @@ export default function Hero() {
               {t.hero.badge}
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
-              {t.hero.title.part1}{" "}
+              {t.hero.title.part1}{' '}
               <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                 {t.hero.title.part2}
               </span>
             </h1>
-            <p className="text-xl text-muted-foreground max-w-[600px]">{t.hero.subtitle}</p>
+            <p className="text-xl text-muted-foreground max-w-[600px]">
+              {t.hero.subtitle}
+            </p>
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
                 <Button size="lg" className="w-full sm:w-auto">
                   {t.hero.primaryButton}
                 </Button>
               </motion.div>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button size="lg" variant="outline" className="w-full sm:w-auto">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="w-full sm:w-auto"
+                >
                   {t.hero.secondaryButton}
                 </Button>
               </motion.div>
@@ -71,7 +92,7 @@ export default function Hero() {
             <div className="relative aspect-video overflow-hidden rounded-xl shadow-2xl">
               <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-primary/5" />
               <img
-                src="/placeholder.svg?height=720&width=1280"
+                src="/dashboard.png"
                 alt="Real estate agent using VoiceConnect"
                 className="w-full h-full object-cover"
               />
@@ -85,7 +106,9 @@ export default function Hero() {
               >
                 <div className="flex items-center space-x-2">
                   <div className="w-3 h-3 rounded-full bg-green-500" />
-                  <span className="text-sm font-medium">{t.hero.liveTranslation}</span>
+                  <span className="text-sm font-medium">
+                    {t.hero.liveTranslation}
+                  </span>
                 </div>
               </motion.div>
 
@@ -102,6 +125,5 @@ export default function Hero() {
         </div>
       </div>
     </section>
-  )
+  );
 }
-
