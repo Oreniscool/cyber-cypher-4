@@ -1,7 +1,7 @@
 'use client';
 
 import type React from 'react';
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   format,
@@ -64,7 +64,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
-
+import { fetchEvents, createEventFromPrompt } from '@/app/api/api';
 // Event types
 type EventType = 'appointment' | 'followup';
 
@@ -197,6 +197,9 @@ export default function CalendarPage() {
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
   const [isEditEventOpen, setIsEditEventOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [isLoadingEvents, setIsLoadingEvents] = useState(false);
+  const [promptInput, setPromptInput] = useState('');
+  const [promptLanguage, setPromptLanguage] = useState('en');
   const [newEvent, setNewEvent] = useState<Partial<Event>>({
     title: '',
     client: '',
@@ -208,6 +211,34 @@ export default function CalendarPage() {
     status: 'pending',
     notes: '',
   });
+  useEffect(() => {
+    async function loadEvents() {
+      try {
+        setIsLoadingEvents(true);
+        const fetchedEvents = await fetchEvents();
+        setEvents(fetchedEvents);
+      } catch (error) {
+        console.error('Failed to load events:', error);
+        // Optionally, show an error toast or message
+      } finally {
+        setIsLoadingEvents(false);
+      }
+    }
+
+    loadEvents();
+  }, []);
+  const handleCreateEventFromPrompt = useCallback(async () => {
+    if (!promptInput) return;
+
+    try {
+      const newEvent = await createEventFromPrompt(promptInput, promptLanguage);
+      setEvents((prevEvents) => [...prevEvents, newEvent]);
+      setPromptInput('');
+    } catch (error) {
+      console.error('Failed to create event from prompt:', error);
+      // Optionally, show an error toast or message
+    }
+  }, [promptInput, promptLanguage]);
 
   const filteredEvents = useMemo(() => {
     return selectedDate
@@ -389,18 +420,6 @@ export default function CalendarPage() {
                   <Clock className="h-5 w-5 text-primary" />
                   Events
                 </span>
-                <Button
-                  onClick={() => {
-                    setNewEvent({
-                      ...newEvent,
-                      date: selectedDate || new Date(),
-                    });
-                    setIsAddEventOpen(true);
-                  }}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Event
-                </Button>
               </CardTitle>
               <CardDescription>
                 {selectedDate
@@ -447,22 +466,37 @@ export default function CalendarPage() {
       </div>
 
       {/* Add Event Dialog */}
-      <Dialog open={isAddEventOpen} onOpenChange={setIsAddEventOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Add New Event</DialogTitle>
-            <DialogDescription>
-              Create a new appointment or follow-up with a client.
-            </DialogDescription>
-          </DialogHeader>
-          <EventForm
-            event={newEvent}
-            onEventChange={setNewEvent}
-            onSubmit={handleAddEvent}
-            onCancel={() => setIsAddEventOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
+      <Card>
+        <CardHeader>
+          <CardTitle>Create Event from Prompt</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex space-x-2">
+            <Select value={promptLanguage} onValueChange={setPromptLanguage}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select Language" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="en">English</SelectItem>
+                <SelectItem value="hi">Hindi</SelectItem>
+                <SelectItem value="mr">Marathi</SelectItem>
+                <SelectItem value="te">Telugu</SelectItem>
+              </SelectContent>
+            </Select>
+            <Input
+              placeholder="Describe your event in natural language"
+              value={promptInput}
+              onChange={(e) => setPromptInput(e.target.value)}
+            />
+            <Button
+              onClick={handleCreateEventFromPrompt}
+              disabled={!promptInput || isLoadingEvents}
+            >
+              Create Event
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Edit Event Dialog */}
       <Dialog open={isEditEventOpen} onOpenChange={setIsEditEventOpen}>

@@ -48,3 +48,68 @@ export const startAudioRecording = async () => {
     console.error('Error starting recording:', error);
   }
 };
+
+export async function fetchEvents(language?: string): Promise<Event[]> {
+  try {
+    const url = new URL(`http://127.0.0.1:5000/events`);
+    if (language) {
+      url.searchParams.append('lang', language);
+    }
+
+    const response = await fetch(url.toString(), {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch events');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching events:', error);
+    throw error;
+  }
+}
+export async function createEventFromPrompt(
+  prompt: string,
+  language: string = 'hi'
+): Promise<Event> {
+  try {
+    const response = await fetch(`http://127.0.0.1:5000/events`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        prompt,
+        lang: language,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to create event');
+    }
+
+    const data = await response.json();
+    return {
+      id: Date.now(), // Temporary ID generation
+      title: data.event.title,
+      client: data.event.original_title,
+      date: new Date(data.event.start_time),
+      location: '',
+      language: data.event.original_lang,
+      avatar: '/placeholder.svg?height=40&width=40',
+      attendees: 1,
+      type: 'appointment',
+      status: 'pending',
+      notes: `Original Language: ${data.event.original_lang}`,
+    };
+  } catch (error) {
+    console.error('Error creating event from prompt:', error);
+    throw error;
+  }
+}

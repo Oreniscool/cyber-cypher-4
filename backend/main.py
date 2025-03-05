@@ -399,18 +399,19 @@ def get_results():
 
     return jsonify({"sentiment_scores": sentiment_data, "summary": summary})
 
-@app.route("/api/events", methods=["GET"])
+@app.route("/events", methods=["GET"])
 def list_events():
     """Get all events with optional language translation."""
     target_lang = request.args.get("lang", "en")
     events = get_events(target_lang=target_lang)
     return jsonify(events)
 
-@app.route("/api/events", methods=["POST"])
+@app.route("/events", methods=["POST"])
 def create_event():
     """Create a new event from a user prompt in any language."""
     try:
         data = request.json
+        print(data)
         prompt = data.get("prompt")
         src_lang = data.get("lang", "en")
 
