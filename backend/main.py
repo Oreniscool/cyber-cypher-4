@@ -11,12 +11,20 @@ from transformers import MarianMTModel, MarianTokenizer
 from gtts import gTTS
 from werkzeug.utils import secure_filename
 import tempfile
+import cv2
+from deepface import DeepFace
+import matplotlib.pyplot as plt
+import numpy as np
+from flask import Flask, jsonify
+import threading
 from groq import Groq
 app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend communication
 
+
 whisper_model = whisper.load_model("base")
 GROQ_API_KEY = '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'
+client = Groq(api_key=GROQ_API_KEY)
 # Ensure audio directory exists
 AUDIO_DIR = "recordings"
 os.makedirs(AUDIO_DIR, exist_ok=True)
@@ -182,8 +190,7 @@ def followup_text():
 
         # Initialize Groq client
         logger.debug("Initializing Groq client...")
-        client = Groq(api_key=GROQ_API_KEY)
-
+       
         # Updated prompt for Groq API
         prompt = f"""
 You are a professional real estate assistant. Extract the important information related to the kind of flat the client wants and provide it in the form of pointers. Use the following template:
@@ -265,6 +272,99 @@ def get_audio():
         return jsonify({"message": "Audio file not found", "status": "error"}), 404
     return send_file(speech_file, mimetype="audio/mpeg", as_attachment=False)
 
+sentiment_scores = {}
+analysis_thread = None
+running = False
+lock = threading.Lock()
 
-if __name__ == "__main__":
+def analyze_webcam_sentiment(duration=30):
+    """
+    Analyzes sentiment from webcam in real-time and updates sentiment_scores.
+    """
+    global sentiment_scores, running
+    cap = cv2.VideoCapture(0)  # Open webcam
+    frame_count = 0
+    running = True
+
+    print("Starting real-time sentiment analysis...")
+
+    while frame_count < duration * 10 and running:  # Capture frames for given duration (approx. 10 FPS)
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        try:
+            result = DeepFace.analyze(frame_rgb, actions=['emotion'], enforce_detection=False)
+            dominant_emotion = result[0]['dominant_emotion']
+            
+            with lock:
+                sentiment_scores[dominant_emotion] = sentiment_scores.get(dominant_emotion, 0) + 1
+
+            cv2.putText(frame, f"Emotion: {dominant_emotion}", (50, 50),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+        except:
+            pass  # Skip frames where no face is detected
+
+        cv2.imshow("Webcam Sentiment Analysis", frame)
+        frame_count += 1
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
+    running = False
+
+
+@app.route('/start_analysis', methods=['GET'])
+def start_analysis():
+    """Starts the webcam sentiment analysis in a separate thread."""
+    global sentiment_scores, analysis_thread, running
+    if running:
+        return jsonify({"message": "Analysis is already running"})
+
+    sentiment_scores = {}  # Reset scores
+    analysis_thread = threading.Thread(target=analyze_webcam_sentiment, args=(30,))
+    analysis_thread.start()
+    return jsonify({"message": "Sentiment analysis started"})
+
+
+@app.route('/stop_analysis', methods=['GET'])
+def stop_analysis():
+    """Stops the webcam sentiment analysis."""
+    global running
+    if not running:
+        return jsonify({"message": "No analysis is running"})
+
+    running = False
+    return jsonify({"message": "Sentiment analysis stopped"})
+
+
+@app.route('/get_results', methods=['GET'])
+def get_results():
+    """Returns the current sentiment analysis results along with an AI-generated summary."""
+    global sentiment_scores
+
+    with lock:
+        sentiment_data = sentiment_scores.copy()  # Copy to prevent threading issues
+
+    prompt = f"""
+    Analyze the following sentiment data and provide a short summary:
+    {sentiment_data}
+    """
+
+    response = client.chat.completions.create(
+        model="llama3-8b-8192",
+        messages=[{"role": "system", "content": "You are an expert sentiment analysis summarizer."},
+                  {"role": "user", "content": prompt}]
+    )
+
+    summary = response.choices[0].message.content
+
+    return jsonify({"sentiment_scores": sentiment_data, "summary": summary})
+
+
+if __name__ == '__main__':
     app.run(debug=True)
