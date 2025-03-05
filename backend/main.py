@@ -18,6 +18,11 @@ import numpy as np
 from flask import Flask, jsonify
 import threading
 from groq import Groq
+from services.prompt_parser import parse_prompt
+from models import Event  # Absolute import
+from services.calendar_service import add_event, get_events
+from datetime import datetime
+from functools import lru_cache
 app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend communication
 
@@ -96,19 +101,48 @@ def transcribe_audio(filepath):
         return f"Transcription Error: {e}"
 
 
+# Add model cache
+translation_models = {}
+translation_tokenizers = {}
+
+@lru_cache(maxsize=10)
+def get_translation_model(model_name):
+    """Cache translation models to avoid reloading."""
+    if model_name not in translation_models:
+        try:
+            tokenizer = MarianTokenizer.from_pretrained(model_name)
+            model = MarianMTModel.from_pretrained(model_name)
+            translation_models[model_name] = model
+            translation_tokenizers[model_name] = tokenizer
+        except Exception as e:
+            logger.error(f"Error loading translation model {model_name}: {e}")
+            return None, None
+    return translation_models.get(model_name), translation_tokenizers.get(model_name)
+
 def translate_text(text, src_lang, tgt_lang):
     """Translate text using MarianMT."""
     try:
-        model_name = f"Helsinki-NLP/opus-mt-{src_lang}-{tgt_lang}"
+        # Special handling for Hindi
+        if src_lang == "hi" and tgt_lang == "en":
+            model_name = "Helsinki-NLP/opus-mt-hi-en"
+        elif src_lang == "en" and tgt_lang == "hi":
+            model_name = "Helsinki-NLP/opus-mt-en-hi"
+        else:
+            model_name = f"Helsinki-NLP/opus-mt-{src_lang}-{tgt_lang}"
+
+        logger.debug(f"Using translation model: {model_name}")
         tokenizer = MarianTokenizer.from_pretrained(model_name)
         model = MarianMTModel.from_pretrained(model_name)
-        
 
         tokens = tokenizer(text, return_tensors="pt", padding=True, truncation=True)
         translated = model.generate(**tokens)
-        return tokenizer.decode(translated[0], skip_special_tokens=True)
+        result = tokenizer.decode(translated[0], skip_special_tokens=True)
+        logger.debug(f"Translation result: '{text}' -> '{result}'")
+        return result
+
     except Exception as e:
-        return f"Translation Error: {e}"
+        logger.error(f"Translation error: {str(e)}")
+        return text
 
 
 def text_to_speech(text, language):
@@ -365,6 +399,69 @@ def get_results():
 
     return jsonify({"sentiment_scores": sentiment_data, "summary": summary})
 
+@app.route("/api/events", methods=["GET"])
+def list_events():
+    """Get all events with optional language translation."""
+    target_lang = request.args.get("lang", "en")
+    events = get_events(target_lang=target_lang)
+    return jsonify(events)
+
+@app.route("/api/events", methods=["POST"])
+def create_event():
+    """Create a new event from a user prompt in any language."""
+    try:
+        data = request.json
+        prompt = data.get("prompt")
+        src_lang = data.get("lang", "en")
+
+        logger.info(f"Creating event - Prompt: '{prompt}', Language: {src_lang}")
+
+        if not prompt:
+            return jsonify({"error": "Prompt is required"}), 400
+
+        # First parse the prompt in English
+        event = parse_prompt(prompt, src_lang="en")
+        if not event:
+            logger.error("Failed to parse prompt")
+            return jsonify({"error": "Could not parse the prompt"}), 400
+
+        # If language is Hindi, translate the title
+        original_title = event.title
+        if src_lang == "hi":
+            try:
+                hindi_title = translate_text(event.title, "en", "hi")
+                logger.info(f"Translated title: '{event.title}' -> '{hindi_title}'")
+                event.title = hindi_title
+            except Exception as e:
+                logger.error(f"Translation error: {e}")
+                # Continue with English title if translation fails
+                pass
+
+        # Save the event
+        success = add_event(
+            event,
+            original_title=original_title,
+            original_lang=src_lang
+        )
+
+        if not success:
+            logger.error("Failed to save event")
+            return jsonify({"error": "Failed to save event"}), 500
+
+        return jsonify({
+            "message": "Event created successfully",
+            "event": {
+                "title": event.title,
+                "original_title": original_title,
+                "original_lang": src_lang,
+                "start_time": event.start_time.isoformat(),
+                "end_time": event.end_time.isoformat()
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Error creating event: {e}")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -10,7 +10,9 @@ export const metadata: Metadata = {
   description:
     'Multilingual communication assistant for real estate professionals in India',
   generator: 'v0.dev',
+  
 };
+
 
 export default function RootLayout({
   children,
